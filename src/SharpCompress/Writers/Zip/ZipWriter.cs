@@ -108,7 +108,7 @@ namespace SharpCompress.Writers.Zip
         {
             using (Stream output = WriteToStream(entryPath, zipWriterEntryOptions))
             {
-                source.TransferTo(output);
+                source.TransferTo(output, entryPath, this);
             }
         }
 

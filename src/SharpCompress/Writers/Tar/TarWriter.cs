@@ -88,7 +88,7 @@ namespace SharpCompress.Writers.Tar
             header.Size = realSize;
             header.Write(OutputStream);
 
-            size = source.TransferTo(OutputStream);
+            size = source.TransferTo(OutputStream, filename, this);
             PadTo512(size.Value);
         }
 

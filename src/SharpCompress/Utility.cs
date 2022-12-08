@@ -282,6 +282,28 @@ namespace SharpCompress
             }
         }
 
+        public static long TransferTo(this Stream source, Stream destination, string key, IWriterCompressionListener writerCompressionListener)
+        {
+            byte[] array = GetTransferByteArray();
+            try
+            {
+                var iterations = 0;
+                long total = 0;
+                while (ReadTransferBlock(source, array, out int count))
+                {
+                    total += count;
+                    destination.Write(array, 0, count);
+                    iterations++;
+                    writerCompressionListener.FireEntryCompressionProgress(key, total, iterations);
+                }
+                return total;
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(array);
+            }
+        }
+
         public static long TransferTo(this Stream source, Stream destination, Common.Entry entry, IReaderExtractionListener readerExtractionListener)
         {
             byte[] array = GetTransferByteArray();

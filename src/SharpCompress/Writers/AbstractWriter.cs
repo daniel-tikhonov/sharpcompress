@@ -1,12 +1,15 @@
-﻿#nullable disable
+#nullable disable
 
 using System;
 using System.IO;
+using System.Reflection;
+using SharpCompress.Archives;
 using SharpCompress.Common;
+using SharpCompress.Readers;
 
 namespace SharpCompress.Writers
 {
-    public abstract class AbstractWriter : IWriter
+    public abstract class AbstractWriter : IWriter, IWriterCompressionListener
     {
         private bool _isDisposed;
 
@@ -20,12 +23,40 @@ namespace SharpCompress.Writers
         {
             OutputStream = stream;
         }
+        public event EventHandler<WriterCompressionEventArgs> EntryCompressionProgress;
+        public event EventHandler<WriterCompressionEntryBegin> EntryCompressionBegin;
+        public event EventHandler<WriterCompressionEntryEnd> EntryCompressionEnd;
 
         protected Stream OutputStream { get; private set; }
 
         public ArchiveType WriterType { get; }
 
         protected WriterOptions WriterOptions { get; }
+
+        public void WriteEntry(string filename, Stream source, FileInfo entry)
+        {
+            EntryCompressionBegin?.Invoke(this, new WriterCompressionEntryBegin(filename)
+            {
+                Size = source.Length
+            });
+            Write(filename, source, entry?.LastWriteTime);
+            EntryCompressionEnd?.Invoke(this, new WriterCompressionEntryEnd(filename)
+            {
+                Size = source.Length
+            });
+        }
+        public void WriteEntry(string filename, Stream source, IArchiveEntry entry)
+        {
+            EntryCompressionBegin?.Invoke(this, new WriterCompressionEntryBegin(filename)
+            {
+                Size = source.Length
+            });
+            Write(filename, source, entry?.LastModifiedTime);
+            EntryCompressionEnd?.Invoke(this, new WriterCompressionEntryEnd(filename)
+            {
+                Size = source.Length
+            });
+        }
 
         public abstract void Write(string filename, Stream source, DateTime? modificationTime);
 
@@ -45,6 +76,11 @@ namespace SharpCompress.Writers
                 Dispose(true);
                 _isDisposed = true;
             }
+        }
+
+        public void FireEntryCompressionProgress(string key, long sizeTransferred, int iterations)
+        {
+            EntryCompressionProgress?.Invoke(this, new WriterCompressionEventArgs(key, sizeTransferred, iterations));
         }
 
         ~AbstractWriter()

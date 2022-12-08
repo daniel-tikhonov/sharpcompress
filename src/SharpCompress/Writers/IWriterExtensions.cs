@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
+using SharpCompress.Archives;
 
 namespace SharpCompress.Writers
 {
@@ -9,7 +10,7 @@ namespace SharpCompress.Writers
     {
         public static void Write(this IWriter writer, string entryPath, Stream source)
         {
-            writer.Write(entryPath, source, null);
+            writer.WriteEntry(entryPath, source, (IArchiveEntry?)null);
         }
 
         public static void Write(this IWriter writer, string entryPath, FileInfo source)
@@ -20,7 +21,7 @@ namespace SharpCompress.Writers
             }
             using (var stream = source.OpenRead())
             {
-                writer.Write(entryPath, stream, source.LastWriteTime);
+                writer.WriteEntry(entryPath, stream, source);
             }
         }
 
